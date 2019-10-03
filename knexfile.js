@@ -19,7 +19,7 @@ module.exports = {
       host: "127.0.0.1",
       user: "root",
       password: "Alligator7",
-      database: "jokes"
+      database: "testjokes"
     },
     useNullAsDefault: true,
     migrations: {

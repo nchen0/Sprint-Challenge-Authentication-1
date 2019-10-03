@@ -1,21 +1,13 @@
 const router = require("express").Router();
 const db = require("../database/dbConfig");
-const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-const Joi = require("@hapi/joi");
+const validateUser = require("../helpers/helper-functions.js").validateUser;
+const generateToken = require("../helpers/helper-functions.js").generateToken;
 
 router.post("/register", (req, res) => {
   // implement registration
   let newUser = req.body;
-  const schema = Joi.object({
-    username: Joi.string()
-      .min(3)
-      .required(),
-    password: Joi.string()
-      .min(5)
-      .required()
-  });
-  const validatedResult = schema.validate(newUser);
+  const validatedResult = validateUser(newUser);
   if (validatedResult.error) {
     return res.status(400).send(validatedResult.error.details[0].message);
   }
@@ -33,7 +25,27 @@ router.post("/register", (req, res) => {
 });
 
 router.post("/login", (req, res) => {
-  // implement login
+  let credentials = req.body;
+  const validatedResult = validateUser(credentials);
+  if (validatedResult.error) {
+    return res.status(400).send(validatedResult.error.details[0].message);
+  }
+  console.log("hello");
+  db("users")
+    .where({ username: credentials.username })
+    .first()
+    .then(user => {
+      if (user && bcrypt.compareSync(credentials.password, user.password)) {
+        const token = generateToken(user);
+        res.status(200).json(token);
+      } else {
+        res.status(401).json({ message: "Invalid Credentials" });
+      }
+    })
+    .catch(err => {
+      console.log("err is: ", err);
+      res.status(500).json(err);
+    });
 });
 
 router.get("/users", (req, res) => {
